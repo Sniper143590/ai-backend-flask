@@ -14,6 +14,8 @@ openai.api_key = OPENAI_API_KEY
 def get_response(query, llm, promptContext):
     model = ChatOpenAI(openai_api_key=os.getenv(OPENAI_API_KEY), model=llm)
     print(llm)
+    prepend = "Please format the response in HTML tags. "
+    promptContext = prepend + promptContext
     messages = [
         SystemMessage(content=promptContext),
         HumanMessage(content=query),
