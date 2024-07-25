@@ -9,9 +9,12 @@ def query():
     query = data['query']
     llm = data['llm']
     promptContext = data['promptContext']
+    lastThreeConversations = data['lastThreeConversations']
+    presetButtonPrompt = data['presetButtonPrompt']
+    print("History ---- >>", lastThreeConversations)
     response = get_response(query, llm, promptContext)
-    preprompts = preprompt_generate(query)
-    preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('. ', '.').replace('"','')
+    preprompts = preprompt_generate(query, presetButtonPrompt)
+    preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '').replace('6. ', '').replace('. ', '.').replace('"','')
     preprompts = preprompts.split('\n')
     print(preprompts)
     return jsonify({"message": response, "preprompts":preprompts}), 201
