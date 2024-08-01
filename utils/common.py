@@ -24,6 +24,8 @@ OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
 parser = StrOutputParser()
 openai.api_key = OPENAI_API_KEY
 
+print(OPENAI_API_KEY)
+
 store = {}
 
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
@@ -31,10 +33,10 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
         store[session_id] = InMemoryChatMessageHistory()
     return store[session_id]
 
-def get_response(query, llm, promptContext):
+def get_response(query, llm, promptContext, chatSession):
     model = ChatOpenAI(openai_api_key=os.getenv(OPENAI_API_KEY), model=llm)
     print(llm)
-    prepend = "Please format the response in HTML tags so that I can display the response in the way that OpenAI's ChatGPT does."
+    prepend = "Please format the response in HTML tags which wrapped with div without any code symbol like ``` so that I can directly add it in div tag with following additional rules: 1. the text inside of h tag should be bold 2. Insert <br/> instead of '\n\n' and below of h2 tag to display the and in the way that OpenAI's ChatGPT does."
     promptContext = prepend + promptContext
     messages = [
         SystemMessage(content=promptContext),
@@ -51,15 +53,49 @@ def get_response(query, llm, promptContext):
 
     wrapped_chain = RunnableWithMessageHistory(chain, get_session_history)
 
-    result = wrapped_chain.invoke(query, config={"configurable": {"session_id": "abc123"}})
-    print("result>>>", result)
-    return result
+    results = wrapped_chain.invoke(query, config={"configurable": {"session_id": chatSession}})
+    # for result in results:
+    #     yield result
     # result = model.invoke(messages)
-    # return parser.invoke(result)
+    return parser.invoke(results)
 
-def preprompt_generate(query, presetButtonPrompt):
-    limit = ' Each query must be between 30 and 40 characters'
-    prompt = f'Q: Give me 6 different related queries with {query} based on following instruction: {presetButtonPrompt}.{limit} A:'
+def get_response1(query, llm, promptContext, chatSession):
+    try:
+        model = ChatOpenAI(openai_api_key=os.getenv(OPENAI_API_KEY), model=llm)
+        print(llm)
+        prepend = "Please format the response in markdown text."
+        promptContext = prepend + promptContext
+        messages = [
+            SystemMessage(content=promptContext),
+            HumanMessage(content=query),
+        ]
+        system_message_prompt = SystemMessagePromptTemplate.from_template(promptContext)
+
+        human_message_prompt = HumanMessagePromptTemplate.from_template(query)
+
+        chat_prompt = ChatPromptTemplate.from_messages(
+            [system_message_prompt, MessagesPlaceholder(variable_name="chat_history"), human_message_prompt]
+        )
+        chain = chat_prompt | ChatOpenAI(openai_api_key=os.getenv(OPENAI_API_KEY), model=llm) | StrOutputParser()
+
+        wrapped_chain = RunnableWithMessageHistory(chain, get_session_history)
+        response_text = "" 
+        results = wrapped_chain.invoke(query, config={"configurable": {"session_id": chatSession}})
+        # for result in results:  # Use async for to iterate over the generator
+        #     # print(result)
+        #     yield result
+        #     response_text += result 
+        return results
+        # result = model.invoke(messages)
+        # return parser.invoke(results)
+    except Exception as e:
+        print(str(e))
+        return 'Backend Error'
+     
+
+def preprompt_generate(response, presetButtonPrompt):
+    limit = ' Each query must be between 20 and 30 characters and a simple and short sentence'
+    prompt = f'Q: Give me 6 different related queries with {response} based on following instruction: {presetButtonPrompt}.{limit} A:'
     response = openai.chat.completions.create(
         model="gpt-4-turbo-preview",
         messages=[
