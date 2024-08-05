@@ -3,6 +3,7 @@ from utils.common import get_response, get_response1, preprompt_generate
 import asyncio
 import json
 import time
+import sys
 
 
 llm_blueprint = Blueprint('llm_blueprint', __name__)
@@ -57,7 +58,9 @@ def query1():
         def stream_response_and_preprompts():
             for chunk in response:
                 yield chunk
-            time.sleep(0.1)
+                # time.sleep(0.1)
+                sys.stdout.flush()
+            time.sleep(0.3)
             yield f'preprompts:{json.dumps(preprompts)}'  # Send preprompts after the response
         
         # print(response)
