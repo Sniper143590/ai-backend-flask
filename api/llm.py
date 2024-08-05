@@ -1,6 +1,10 @@
-from flask import Blueprint, request, jsonify, current_app, Response, stream_with_context
+from flask import Blueprint, request, jsonify, current_app, Response, stream_with_context, current_app
 from utils.common import get_response, get_response1, preprompt_generate
 import asyncio
+import json
+import time
+
+
 llm_blueprint = Blueprint('llm_blueprint', __name__)
 
 @llm_blueprint.route('/query', methods=['POST'])
@@ -14,37 +18,52 @@ def query():
         presetButtonPrompt = data['presetButtonPrompt']
         chatSession = data['chatSession']
         print("History ---- >>", lastThreeConversations)
-        response = get_response(query, llm, promptContext, chatSession)
+        response = ""
+        async def  do():
+            response =response + await get_response1(query, llm, promptContext, chatSession)
+        do()
+        # print(response)
         preprompts = preprompt_generate(response, presetButtonPrompt )
         preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '').replace('6. ', '').replace('. ', '.').replace('"','')
         preprompts = preprompts.split('\n')
         print(preprompts)
-        return jsonify({"message": response, "preprompts":preprompts}), 201
+        return jsonify({"message": "response", "preprompts":preprompts}), 201
     except Exception as e:
-        print(e)
-        return jsonify({"messsage": "Backend Error"}), 500
+            print(e)
+            return jsonify({"messsage": "Backend Error"}), 500
         
-@llm_blueprint.route('/query1', methods=['POST'])
+@llm_blueprint.route('/query1', methods=['GET'])
 def query1():
     try:
-        data = request.get_json()
-        query = data['query']
-        llm = data['llm']
-        promptContext = data['promptContext']
-        lastThreeConversations = data['lastThreeConversations']
-        presetButtonPrompt = data['presetButtonPrompt']
-        chatSession = data['chatSession']
+        query = request.args.get('query')
+        llm = request.args.get('llm')
+        promptContext = request.args.get('promptContext')
+        lastThreeConversations = request.args.get('lastThreeConversations')
+        presetButtonPrompt = request.args.get('presetButtonPrompt')
+        chatSession = request.args.get('chatSession')
         print("History ---- >>", lastThreeConversations)
+        result = ''
         response = get_response1(query, llm, promptContext, chatSession)
-        print(response)
+        # print(response)
+        # yield jsonify({"message": response}), 200
+        # result = result + str(response)
+        # for res in response:
+        #     print(res)
+        # print(response)
+        def stream_response_and_preprompts():
+            for chunk in response:
+                yield chunk
+            time.sleep(0.1)
+            yield f'preprompts:{json.dumps(preprompts)}'  # Send preprompts after the response
         preprompts = preprompt_generate(response, presetButtonPrompt )
         preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '').replace('6. ', '').replace('. ', '.').replace('"','')
         preprompts = preprompts.split('\n')
-        print(response)
-        return jsonify({"message": response, "preprompts":preprompts}), 201
+        # print(response)
+        # with llm_blueprint.app_context():
+        return Response(stream_with_context(stream_response_and_preprompts()), mimetype= 'application/json') 
     except Exception as e:
         print(e)
-        return jsonify({"messsage":"Backend Error"}), 500
+        return jsonify({"message":"Backend Error1"})
 
 @llm_blueprint.route('/refresh-preset-prompts', methods=['POST'])
 def refresh_preset_prompts():

@@ -17,7 +17,8 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables.history import RunnableWithMessageHistory
-import openai 
+import openai
+
 
 load_dotenv()
 OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
@@ -80,12 +81,12 @@ def get_response1(query, llm, promptContext, chatSession):
 
         wrapped_chain = RunnableWithMessageHistory(chain, get_session_history)
         response_text = "" 
-        results = wrapped_chain.invoke(query, config={"configurable": {"session_id": chatSession}})
-        # for result in results:  # Use async for to iterate over the generator
-        #     # print(result)
-        #     yield result
+        results = wrapped_chain.stream(query, config={"configurable": {"session_id": chatSession}})
+        for result in results:  # Use async for to iterate over the generator
+            print(result)
+            yield result
         #     response_text += result 
-        return results
+        
         # result = model.invoke(messages)
         # return parser.invoke(results)
     except Exception as e:
