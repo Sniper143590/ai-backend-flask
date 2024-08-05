@@ -50,17 +50,19 @@ def query1():
         # for res in response:
         #     print(res)
         # print(response)
+        preprompts = preprompt_generate(response, presetButtonPrompt )
+        preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '').replace('6. ', '').replace('. ', '.').replace('"','')
+        preprompts = preprompts.split('\n')
+        @stream_with_context
         def stream_response_and_preprompts():
             for chunk in response:
                 yield chunk
             time.sleep(0.1)
             yield f'preprompts:{json.dumps(preprompts)}'  # Send preprompts after the response
-        preprompts = preprompt_generate(response, presetButtonPrompt )
-        preprompts = preprompts.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '').replace('6. ', '').replace('. ', '.').replace('"','')
-        preprompts = preprompts.split('\n')
+        
         # print(response)
         # with llm_blueprint.app_context():
-        return Response(stream_with_context(stream_response_and_preprompts()), mimetype= 'text/plain') 
+        return Response(stream_with_context(stream_response_and_preprompts()), mimetype= 'text/event-stream') 
     except Exception as e:
         print(e)
         return jsonify({"message":"Backend Error1"})
