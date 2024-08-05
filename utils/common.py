@@ -83,7 +83,7 @@ def get_response1(query, llm, promptContext, chatSession):
         response_text = "" 
         results = wrapped_chain.stream(query, config={"configurable": {"session_id": chatSession}})
         for result in results:  # Use async for to iterate over the generator
-            # print(result)
+            print(result)
             yield result
         #     response_text += result 
         
