@@ -58,14 +58,12 @@ def query1():
         def stream_response_and_preprompts():
             for chunk in response:
                 yield chunk
-                time.sleep(0.1)
-                sys.stdout.flush()
-            time.sleep(0.3)
+            time.sleep(0.1)
             yield f'preprompts:{json.dumps(preprompts)}'  # Send preprompts after the response
         
         # print(response)
         # with llm_blueprint.app_context():
-        return Response((stream_response_and_preprompts()), mimetype='text/plain') 
+        return Response(stream_response_and_preprompts(), mimetype='text/plain') 
     except Exception as e:
         print(e)
         return jsonify({"message":"Backend Error1"})
