@@ -58,6 +58,7 @@ def query1():
         def stream_response_and_preprompts():
             for chunk in response:
                 yield chunk
+                print(chunk)
             time.sleep(1)
             yield f'preprompts:{json.dumps(preprompts)}'  # Send preprompts after the response
         
