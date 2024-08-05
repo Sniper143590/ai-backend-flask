@@ -15,7 +15,7 @@ app.register_blueprint(llm_blueprint, url_prefix='/api')
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 load_dotenv()
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/")
 def index():

@@ -65,7 +65,7 @@ def query1():
         
         # print(response)
         # with llm_blueprint.app_context():
-        return Response((stream_response_and_preprompts())) 
+        return Response((stream_response_and_preprompts()), mimetype='text/plain') 
     except Exception as e:
         print(e)
         return jsonify({"message":"Backend Error1"})
